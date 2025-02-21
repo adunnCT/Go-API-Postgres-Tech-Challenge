@@ -11,9 +11,9 @@ import (
 // Config holds the application configuration settings. The configuration is loadded froom
 // environment variables.
 type Config struct {
-	DBHost         string     `env:"Database_host,required"`
+	DBHost         string     `env:"DATABASE_HOST,required"`
 	DBUserName     string     `env:"DATABASE_USER,required"`
-	DBUserPassword string     `env:"DATABSE_PASSWORD,required"`
+	DBUserPassword string     `env:"DATABASE_PASSWORD,required"`
 	DBName         string     `env:"DATABASE_NAME,required"`
 	DBPort         string     `env:"DATABASE_PORT,required"`
 	Host           string     `env:"HOST,required"`
