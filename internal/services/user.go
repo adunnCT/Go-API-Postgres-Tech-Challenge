@@ -26,7 +26,32 @@ func NewUsersService(logger *slog.Logger, db *sql.DB) *UsersService {
 // models.User or an error
 
 func (s *UsersService) Create(ctx context.Context, user models.User) (models.User, error) {
-	return models.User{}, nil
+	s.logger.DebugContext(ctx, "Creating user", "id", user.Name)
+
+	res, err := s.db.ExecContext(ctx,
+		`INSERT INTO users (name, email, password) VALUES ($1::text, $2::text, $3::text)`,
+		user.Name, user.Email, user.Password,
+	)
+
+	if err != nil {
+		return models.User{}, fmt.Errorf(
+			"[in services.UsersService.Create] failed to create user: %w",
+			err,
+		)
+	}
+
+	id, err := res.LastInsertId()
+
+	if err != nil {
+		return models.User{}, fmt.Errorf(
+			"[in services.UsersService.Create] failed to get created user ID: %w",
+			err,
+		)
+	}
+
+	user.ID = uint(id)
+
+	return user, nil
 }
 
 // Read attempts to read a user from the database using the provided id. A
