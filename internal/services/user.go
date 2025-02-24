@@ -3,6 +3,8 @@ package services
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 	"log/slog"
 
 	"github.com/adunnCT/blog/internal/models"
@@ -30,7 +32,30 @@ func (s *UsersService) Create(ctx context.Context, user models.User) (models.Use
 // Read attempts to read a user from the database using the provided id. A
 // fully hydrated models.User or error is returned
 func (s *UsersService) Read(ctx context.Context, id uint64) (models.User, error) {
-	return models.User{}, nil
+	s.logger.DebugContext(ctx, "Reading user", "id", id)
+
+	row := s.db.QueryRowContext(
+		ctx,
+		`SELECT id, name, email, password FROM users WHERE id = $1::int`,
+		id,
+	)
+
+	var user models.User
+
+	err := row.Scan(&user.ID, &user.Name, &user.Email, &user.Password)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return models.User{}, nil
+		default:
+			return models.User{}, fmt.Errorf(
+				"[in services.UsersService.Read] failed to read user: %w",
+				err,
+			)
+		}
+	}
+
+	return user, nil
 }
 
 // Update attempts to perform an update of the user with the provided id,
