@@ -152,7 +152,7 @@ func (s *UsersService) List(ctx context.Context, id uint64) (userList []models.U
 		var user models.User
 
 		if err := rows.Scan(&user.ID, &user.Email, &user.Name, &user.Password); err != nil {
-			return []models.User{}, fmt.Errorf("[in services.UsersService.List] failed to scan row: %w", err)
+			return userList, fmt.Errorf("[in services.UsersService.List] failed to scan row: %w", err)
 		}
 
 		userList = append(userList, user)

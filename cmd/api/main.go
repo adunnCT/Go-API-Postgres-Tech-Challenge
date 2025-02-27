@@ -3,11 +3,18 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
+	"net"
+	"net/http"
 	"os"
+	"os/signal"
+	"time"
 
 	"github.com/adunnCT/blog/internal/config"
+	"github.com/adunnCT/blog/internal/routes"
+	"github.com/adunnCT/blog/internal/services"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -58,5 +65,65 @@ func run(ctx context.Context) error {
 
 	logger.InfoContext(ctx, "Connected successfully to database")
 
-	return nil
+	// Create a new users service
+	usersService := services.NewUsersService(logger, db)
+
+	// Create a serve mux to act as our route multiplexer
+	mux := http.NewServeMux()
+
+	// Add our routes to the mux
+	routes.AddRoutes(mux, logger, usersService)
+
+	// Create a new http server with our mux as the handler
+	httpServer := &http.Server{
+		Addr:    net.JoinHostPort(cfg.Host, cfg.Port),
+		Handler: mux,
+	}
+
+	errChan := make(chan error)
+
+	// Server run context
+	ctx, done := context.WithCancel(ctx)
+	defer done()
+
+	// Handle graceful shutdown with go routine on SIGINT
+	go func() {
+		// create a channel to listen for SIGINT and then block until it is received
+		sig := make(chan os.Signal, 1)
+		signal.Notify(sig, os.Interrupt)
+		<-sig
+
+		logger.DebugContext(ctx, "Received SIGINT, shutting down server")
+
+		// Create a context with a timeout to allow the server to shut down gracefully
+		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+
+		// Shutdown the server. If an error occurs, send it to the error channel
+		if err = httpServer.Shutdown(ctx); err != nil {
+			errChan <- fmt.Errorf("[in main.run] failed to shutdown http server: %w", err)
+			return
+		}
+
+		// Close the idle connections channel, unblocking `run()`
+		done()
+	}()
+
+	// Start the http server
+	//
+	// once httpServer.Shutdown is called, it will always return a
+	// http.ErrServerClosed error and we don't care about that error.
+	logger.InfoContext(ctx, "listening", slog.String("address", httpServer.Addr))
+
+	if err = httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return fmt.Errorf("[in main.run] failed to listen and serve: %w", err)
+	}
+
+	// block until the server is shut down or an error occurs
+	select {
+	case err = <-errChan:
+		return err
+	case <-ctx.Done():
+		return nil
+	}
 }
