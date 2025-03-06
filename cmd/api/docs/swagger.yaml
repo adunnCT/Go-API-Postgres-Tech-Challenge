@@ -1,4 +1,16 @@
 basePath: /api
+definitions:
+  handlers.response:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      password:
+        type: string
+    type: object
 externalDocs:
   description: OpenAPI
   url: https://swagger.io/resources/open-api/
@@ -33,7 +45,7 @@ paths:
         "200":
           description: OK
           schema:
-            type: integer
+            $ref: '#/definitions/handlers.response'
         "400":
           description: Bad Request
           schema:

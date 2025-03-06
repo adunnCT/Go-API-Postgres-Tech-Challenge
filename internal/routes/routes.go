@@ -25,7 +25,7 @@ import (
 // @externalDocs.url			https://swagger.io/resources/open-api/
 func AddRoutes(mux *http.ServeMux, logger *slog.Logger, usersService *services.UsersService, baseURL string) {
 	// Read a user
-	mux.Handle("GET /api/users/{id}", handlers.HandleRead(logger))
+	mux.Handle("GET /api/users/{id}", handlers.HandleRead(logger, usersService))
 
 	// swagger docs
 	mux.Handle(
