@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/adunnCT/blog/internal/config"
+	"github.com/adunnCT/blog/internal/middleware"
 	"github.com/adunnCT/blog/internal/routes"
 	"github.com/adunnCT/blog/internal/services"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -71,13 +72,18 @@ func run(ctx context.Context) error {
 	// Create a serve mux to act as our route multiplexer
 	mux := http.NewServeMux()
 
+	// Wrap the mux with middleware
+	wrappedMux := middleware.Logger(logger)(mux)
+
+	wrappedMux = middleware.Recover(logger)(wrappedMux)
+
 	// Add our routes to the mux
 	routes.AddRoutes(mux, logger, usersService)
 
 	// Create a new http server with our mux as the handler
 	httpServer := &http.Server{
 		Addr:    net.JoinHostPort(cfg.Host, cfg.Port),
-		Handler: mux,
+		Handler: wrappedMux,
 	}
 
 	errChan := make(chan error)
