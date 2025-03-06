@@ -26,6 +26,7 @@ import (
 func AddRoutes(mux *http.ServeMux, logger *slog.Logger, usersService *services.UsersService, baseURL string) {
 	// Read a user
 	mux.Handle("GET /api/users/{id}", handlers.HandleRead(logger, usersService))
+	mux.Handle("POST /api/users/", handlers.HandleCreate(logger, usersService))
 
 	// swagger docs
 	mux.Handle(

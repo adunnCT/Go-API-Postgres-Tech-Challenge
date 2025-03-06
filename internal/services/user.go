@@ -28,10 +28,10 @@ func NewUsersService(logger *slog.Logger, db *sql.DB) *UsersService {
 func (s *UsersService) Create(ctx context.Context, user models.User) (models.User, error) {
 	s.logger.DebugContext(ctx, "Creating user", "name", user.Name)
 
-	res, err := s.db.ExecContext(ctx,
-		`INSERT INTO users (name, email, password) VALUES ($1::text, $2::text, $3::text)`,
+	err := s.db.QueryRowContext(ctx,
+		`INSERT INTO users (name, email, password) VALUES ($1::text, $2::text, $3::text) RETURNING id`,
 		user.Name, user.Email, user.Password,
-	)
+	).Scan(&user.ID)
 
 	if err != nil {
 		return models.User{}, fmt.Errorf(
@@ -39,17 +39,6 @@ func (s *UsersService) Create(ctx context.Context, user models.User) (models.Use
 			err,
 		)
 	}
-
-	id, err := res.LastInsertId()
-
-	if err != nil {
-		return models.User{}, fmt.Errorf(
-			"[in services.UsersService.Create] failed to get created user ID: %w",
-			err,
-		)
-	}
-
-	user.ID = uint(id)
 
 	return user, nil
 }

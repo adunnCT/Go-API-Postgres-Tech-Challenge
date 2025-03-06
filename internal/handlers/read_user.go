@@ -16,25 +16,25 @@ type userReader interface {
 	Read(ctx context.Context, id uint64) (models.User, error)
 }
 
-// response represents the response for reading a user.
-type response struct {
+// readUserResponse represents the response for reading a user.
+type readUserResponse struct {
 	ID       uint   `json:"id"`
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
-//	@Summary		Read User
-//	@Description	Read User by ID
-//	@Tags			user
-//	@Accept			json
-//	@Produce		json
-//	@Param			id	path		string	true	"User ID"
-//	@Success		200	{object}	response
-//	@Failure		400	{object}	string
-//	@Failure		404	{object}	string
-//	@Failure		500	{object}	string
-//	@Router			/users/{id}  [GET]
+// @Summary		Read User
+// @Description	Read User by ID
+// @Tags			user
+// @Accept			json
+// @Produce		json
+// @Param			id	path		string	true	"User ID"
+// @Success		200	{object}	readUserResponse
+// @Failure		400	{object}	string
+// @Failure		404	{object}	string
+// @Failure		500	{object}	string
+// @Router			/users/{id}  [GET]
 func HandleRead(logger *slog.Logger, userReader userReader) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -65,7 +65,7 @@ func HandleRead(logger *slog.Logger, userReader userReader) http.Handler {
 		}
 
 		// Convert our models.User domain model into a response model.
-		response := response{
+		response := readUserResponse{
 			ID:       user.ID,
 			Name:     user.Name,
 			Email:    user.Email,
