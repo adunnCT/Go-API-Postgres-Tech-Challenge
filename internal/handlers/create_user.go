@@ -27,10 +27,15 @@ func HandleCreate(logger *slog.Logger, userCreator userCreator) http.Handler {
 
 		var user models.User
 
-		err := json.NewDecoder(r.Body).Decode(&user)
+		res, problems, err := decodeValid[*models.User](r)
+
+		user = *res
 
 		if err != nil {
-			logger.ErrorContext(ctx, "failed to read req body", slog.String("error", err.Error()))
+			for prob := range problems {
+				logger.ErrorContext(ctx, "failed to create user: ", slog.String("error", problems[prob]))
+			}
+
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
