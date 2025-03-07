@@ -9,7 +9,7 @@ type User struct {
 	Password string
 }
 
-func (u *User) Valid(ctx context.Context) map[string]string {
+func (u User) Valid(ctx context.Context) map[string]string {
 	problems := make(map[string]string)
 
 	if u.Name == "" {

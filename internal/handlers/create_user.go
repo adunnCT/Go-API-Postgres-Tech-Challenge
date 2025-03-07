@@ -25,15 +25,13 @@ func HandleCreate(logger *slog.Logger, userCreator userCreator) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		var user models.User
+		res, problems, err := decodeValid[models.User](r)
 
-		res, problems, err := decodeValid[*models.User](r)
-
-		user = *res
+		user := res
 
 		if err != nil {
 			for prob := range problems {
-				logger.ErrorContext(ctx, "failed to create user: ", slog.String("error", problems[prob]))
+				logger.ErrorContext(ctx, "failed to parse req body: ", slog.String("error", problems[prob]))
 			}
 
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
